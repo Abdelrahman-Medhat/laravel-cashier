@@ -10,6 +10,21 @@ use Illuminate\Support\Str;
 use AbdelrahmanMedhat\Cashier\Cashier;
 use AbdelrahmanMedhat\Cashier\Events\WebhookHandled;
 use AbdelrahmanMedhat\Cashier\Events\WebhookReceived;
+use AbdelrahmanMedhat\Cashier\Events\StripeChargeSucceeded;
+use AbdelrahmanMedhat\Cashier\Events\StripeChargeFailed;
+use AbdelrahmanMedhat\Cashier\Events\StripeInvoicePaymentSucceeded;
+use AbdelrahmanMedhat\Cashier\Events\StripeInvoicePaymentFailed;
+use AbdelrahmanMedhat\Cashier\Events\StripeCustomerSubscriptionCreated;
+use AbdelrahmanMedhat\Cashier\Events\StripeCustomerSubscriptionUpdated;
+use AbdelrahmanMedhat\Cashier\Events\StripeCustomerSubscriptionDeleted;
+use AbdelrahmanMedhat\Cashier\Events\StripeCustomerCreate;
+use AbdelrahmanMedhat\Cashier\Events\StripeCustomerUpdate;
+use AbdelrahmanMedhat\Cashier\Events\StripeCustomerDelete;
+use AbdelrahmanMedhat\Cashier\Events\StripePaymentIntentSucceeded;
+use AbdelrahmanMedhat\Cashier\Events\StripePaymentIntentFailed;
+use AbdelrahmanMedhat\Cashier\Events\StripePaymentMethodAttached;
+use AbdelrahmanMedhat\Cashier\Events\StripeCheckoutSessionCompleted;
+use AbdelrahmanMedhat\Cashier\Events\StripeRefundIssued;
 use AbdelrahmanMedhat\Cashier\Http\Middleware\VerifyWebhookSignature;
 use AbdelrahmanMedhat\Cashier\Payment;
 use AbdelrahmanMedhat\Cashier\Subscription;
@@ -43,6 +58,73 @@ class WebhookController extends Controller
         $method = 'handle'.Str::studly(str_replace('.', '_', $payload['type']));
 
         WebhookReceived::dispatch($payload);
+
+        $eventType = $payload['type'] ?? null;
+
+        switch ($eventType) {
+            case 'charge.succeeded':
+                event(new StripeChargeSucceeded($payload));
+                break;
+
+            case 'charge.failed':
+                event(new StripeChargeFailed($payload));
+                break;
+
+            case 'invoice.payment_succeeded':
+                event(new StripeInvoicePaymentSucceeded($payload));
+                break;
+
+            case 'invoice.payment_failed':
+                event(new StripeInvoicePaymentFailed($payload));
+                break;
+
+            case 'customer.subscription.created':
+                event(new StripeCustomerSubscriptionCreated($payload));
+                break;
+
+            case 'customer.subscription.updated':
+                event(new StripeCustomerSubscriptionUpdated($payload));
+                break;
+
+            case 'customer.subscription.deleted':
+                event(new StripeCustomerSubscriptionDeleted($payload));
+                break;
+
+            case 'customer.created':
+                event(new StripeCustomerCreate($payload));
+                break;
+
+            case 'customer.updated':
+                event(new StripeCustomerUpdate($payload));
+                break;
+
+            case 'customer.deleted':
+                event(new StripeCustomerDelete($payload));
+                break;
+
+            case 'payment_intent.succeeded':
+                event(new StripePaymentIntentSucceeded($payload));
+                break;
+
+            case 'payment_intent.payment_failed':
+                event(new StripePaymentIntentFailed($payload));
+                break;
+
+            case 'payment_method.attached':
+                event(new StripePaymentMethodAttached($payload));
+                break;
+
+            case 'checkout.session.completed':
+                event(new StripeCheckoutSessionCompleted($payload));
+                break;
+
+            case 'refund.issued':
+                event(new StripeRefundIssued($payload));
+                break;
+
+            default:
+                break;
+        }
 
         if (method_exists($this, $method)) {
             $this->setMaxNetworkRetries();

@@ -144,15 +144,6 @@ class CashierServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__.'/../events' => app_path('Events/Cashier'),
-            ], 'cashier-events');
-
-            $this->publishes([
-                __DIR__.'/../events' => app_path('Listeners/Cashier'),
-            ], 'cashier-listeners');
-
-
-            $this->publishes([
                 __DIR__.'/../config/cashier.php' => $this->app->configPath('cashier.php'),
             ], 'cashier-config');
 
