@@ -20,7 +20,7 @@ trait ManagesPaymentMethods
     public function createSetupIntent(array $options = [])
     {
         if ($this->hasStripeId()) {
-            $options['customer'] = $this->cashier_stripe_id;
+            $options['customer'] = $this->stripe_id;
         }
 
         return static::stripe()->setupIntents->create($options);
@@ -46,7 +46,7 @@ trait ManagesPaymentMethods
      */
     public function hasDefaultPaymentMethod()
     {
-        return (bool) $this->pm_type;
+        return (bool) $this->cashier_pm_type;
     }
 
     /**
@@ -77,7 +77,7 @@ trait ManagesPaymentMethods
 
         // "type" is temporarily required by Stripe...
         $paymentMethods = static::stripe()->paymentMethods->all(
-            ['customer' => $this->cashier_stripe_id, 'type' => $type] + $parameters
+            ['customer' => $this->stripe_id, 'type' => $type] + $parameters
         );
 
         return Collection::make($paymentMethods->data)->map(function ($paymentMethod) {
@@ -97,9 +97,9 @@ trait ManagesPaymentMethods
 
         $stripePaymentMethod = $this->resolveStripePaymentMethod($paymentMethod);
 
-        if ($stripePaymentMethod->customer !== $this->cashier_stripe_id) {
+        if ($stripePaymentMethod->customer !== $this->stripe_id) {
             $stripePaymentMethod = $stripePaymentMethod->attach(
-                ['customer' => $this->cashier_stripe_id]
+                ['customer' => $this->stripe_id]
             );
         }
 
@@ -118,7 +118,7 @@ trait ManagesPaymentMethods
 
         $stripePaymentMethod = $this->resolveStripePaymentMethod($paymentMethod);
 
-        if ($stripePaymentMethod->customer !== $this->cashier_stripe_id) {
+        if ($stripePaymentMethod->customer !== $this->stripe_id) {
             return;
         }
 
@@ -131,8 +131,8 @@ trait ManagesPaymentMethods
         // If the payment method was the default payment method, we'll remove it manually...
         if ($stripePaymentMethod->id === $defaultPaymentMethod) {
             $this->forceFill([
-                'pm_type' => null,
-                'pm_last_four' => null,
+                'cashier_pm_type' => null,
+                'cashier_pm_last_four' => null,
             ])->save();
         }
     }
@@ -215,8 +215,8 @@ trait ManagesPaymentMethods
             }
         } else {
             $this->forceFill([
-                'pm_type' => null,
-                'pm_last_four' => null,
+                'cashier_pm_type' => null,
+                'cashier_pm_last_four' => null,
             ])->save();
         }
 
@@ -232,11 +232,11 @@ trait ManagesPaymentMethods
     protected function fillPaymentMethodDetails($paymentMethod)
     {
         if ($paymentMethod->type === 'card') {
-            $this->pm_type = $paymentMethod->card->brand;
-            $this->pm_last_four = $paymentMethod->card->last4;
+            $this->cashier_pm_type = $paymentMethod->card->brand;
+            $this->cashier_pm_last_four = $paymentMethod->card->last4;
         } else {
-            $this->pm_type = $type = $paymentMethod->type;
-            $this->pm_last_four = $paymentMethod?->$type->last4 ?? null;
+            $this->cashier_pm_type = $type = $paymentMethod->type;
+            $this->cashier_pm_last_four = $paymentMethod?->$type->last4 ?? null;
         }
 
         return $this;
@@ -253,11 +253,11 @@ trait ManagesPaymentMethods
     protected function fillSourceDetails($source)
     {
         if ($source instanceof StripeCard) {
-            $this->pm_type = $source->brand;
-            $this->pm_last_four = $source->last4;
+            $this->cashier_pm_type = $source->brand;
+            $this->cashier_pm_last_four = $source->last4;
         } elseif ($source instanceof StripeBankAccount) {
-            $this->pm_type = 'Bank Account';
-            $this->pm_last_four = $source->last4;
+            $this->cashier_pm_type = 'Bank Account';
+            $this->cashier_pm_last_four = $source->last4;
         }
 
         return $this;

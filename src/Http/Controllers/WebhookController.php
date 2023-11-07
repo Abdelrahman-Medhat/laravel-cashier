@@ -152,7 +152,7 @@ class WebhookController extends Controller
         if ($user) {
             $data = $payload['data']['object'];
 
-            if (! $user->subscriptions->contains('cashier_stripe_id', $data['id'])) {
+            if (! $user->cashierSubscriptions->contains('stripe_id', $data['id'])) {
                 if (isset($data['trial_end'])) {
                     $trialEndsAt = Carbon::createFromTimestamp($data['trial_end']);
                 } else {
@@ -162,9 +162,9 @@ class WebhookController extends Controller
                 $firstItem = $data['items']['data'][0];
                 $isSinglePrice = count($data['items']['data']) === 1;
 
-                $subscription = $user->subscriptions()->create([
+                $subscription = $user->cashierSubscriptions()->create([
                     'name' => $data['metadata']['name'] ?? $this->newSubscriptionName($payload),
-                    'cashier_stripe_id' => $data['id'],
+                    'stripe_id' => $data['id'],
                     'stripe_status' => $data['status'],
                     'stripe_price' => $isSinglePrice ? $firstItem['price']['id'] : null,
                     'quantity' => $isSinglePrice && isset($firstItem['quantity']) ? $firstItem['quantity'] : null,
@@ -174,7 +174,7 @@ class WebhookController extends Controller
 
                 foreach ($data['items']['data'] as $item) {
                     $subscription->items()->create([
-                        'cashier_stripe_id' => $item['id'],
+                        'stripe_id' => $item['id'],
                         'stripe_product' => $item['price']['product'],
                         'stripe_price' => $item['price']['id'],
                         'quantity' => $item['quantity'] ?? null,
@@ -208,7 +208,7 @@ class WebhookController extends Controller
         if ($user = $this->getUserByStripeId($payload['data']['object']['customer'])) {
             $data = $payload['data']['object'];
 
-            $subscription = $user->cashierSubscriptions()->firstOrNew(['cashier_stripe_id' => $data['id']]);
+            $subscription = $user->cashierSubscriptions()->firstOrNew(['stripe_id' => $data['id']]);
 
             if (
                 isset($data['status']) &&
@@ -268,7 +268,7 @@ class WebhookController extends Controller
                     $subscriptionItemIds[] = $item['id'];
 
                     $subscription->items()->updateOrCreate([
-                        'cashier_stripe_id' => $item['id'],
+                        'stripe_id' => $item['id'],
                     ], [
                         'stripe_product' => $item['price']['product'],
                         'stripe_price' => $item['price']['id'],
@@ -277,7 +277,7 @@ class WebhookController extends Controller
                 }
 
                 // Delete items that aren't attached to the subscription anymore...
-                $subscription->items()->whereNotIn('cashier_stripe_id', $subscriptionItemIds)->delete();
+                $subscription->items()->whereNotIn('stripe_id', $subscriptionItemIds)->delete();
             }
         }
 
@@ -293,8 +293,8 @@ class WebhookController extends Controller
     protected function handleCustomerSubscriptionDeleted(array $payload)
     {
         if ($user = $this->getUserByStripeId($payload['data']['object']['customer'])) {
-            $user->subscriptions->filter(function ($subscription) use ($payload) {
-                return $subscription->cashier_stripe_id === $payload['data']['object']['id'];
+            $user->cashierSubscriptions->filter(function ($subscription) use ($payload) {
+                return $subscription->stripe_id === $payload['data']['object']['id'];
             })->each(function ($subscription) {
                 $subscription->markAsCanceled();
             });
@@ -327,15 +327,15 @@ class WebhookController extends Controller
     protected function handleCustomerDeleted(array $payload)
     {
         if ($user = $this->getUserByStripeId($payload['data']['object']['id'])) {
-            $user->subscriptions->each(function (Subscription $subscription) {
+            $user->cashierSubscriptions->each(function (Subscription $subscription) {
                 $subscription->skipTrial()->markAsCanceled();
             });
 
             $user->forceFill([
-                'cashier_stripe_id' => null,
+                'stripe_id' => null,
                 'cashier_trial_ends_at' => null,
-                'pm_type' => null,
-                'pm_last_four' => null,
+                'cashier_pm_type' => null,
+                'cashier_pm_last_four' => null,
             ])->save();
         }
 

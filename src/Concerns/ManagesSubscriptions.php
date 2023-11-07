@@ -152,7 +152,7 @@ trait ManagesSubscriptions
      */
     public function billableSubscription($name = 'default')
     {
-        return $this->subscriptions->where('name', $name)->first();
+        return $this->cashierSubscriptions->where('name', $name)->first();
     }
 
     /**
@@ -160,7 +160,7 @@ trait ManagesSubscriptions
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function subscriptions()
+    public function cashierSubscriptions()
     {
         return $this->hasMany(Cashier::$subscriptionModel, $this->getForeignKey())->orderBy('created_at', 'desc');
     }
@@ -236,7 +236,7 @@ trait ManagesSubscriptions
      */
     public function onProduct($product)
     {
-        return ! is_null($this->subscriptions->first(function (Subscription $subscription) use ($product) {
+        return ! is_null($this->cashierSubscriptions->first(function (Subscription $subscription) use ($product) {
             return $subscription->valid() && $subscription->hasProduct($product);
         }));
     }
@@ -249,7 +249,7 @@ trait ManagesSubscriptions
      */
     public function onPrice($price)
     {
-        return ! is_null($this->subscriptions->first(function (Subscription $subscription) use ($price) {
+        return ! is_null($this->cashierSubscriptions->first(function (Subscription $subscription) use ($price) {
             return $subscription->valid() && $subscription->hasPrice($price);
         }));
     }

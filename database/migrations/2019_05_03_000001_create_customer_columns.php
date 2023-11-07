@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('cashier_stripe_id')->nullable()->index();
+            $table->string('stripe_id')->nullable()->index();
             $table->string('cashier_pm_type')->nullable();
             $table->string('cashier_pm_last_four', 4)->nullable();
             $table->timestamp('cashier_trial_ends_at')->nullable();
@@ -26,7 +26,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn([
-                'cashier_stripe_id',
+                'stripe_id',
                 'cashier_pm_type',
                 'cashier_pm_last_four',
                 'cashier_trial_ends_at',

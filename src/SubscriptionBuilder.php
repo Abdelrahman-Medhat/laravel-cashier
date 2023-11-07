@@ -294,7 +294,7 @@ class SubscriptionBuilder
      */
     protected function createSubscription(StripeSubscription $stripeSubscription)
     {
-        if ($subscription = $this->owner->subscriptions()->where('cashier_stripe_id', $stripeSubscription->id)->first()) {
+        if ($subscription = $this->owner->cashierSubscriptions()->where('stripe_id', $stripeSubscription->id)->first()) {
             return $subscription;
         }
 
@@ -303,9 +303,9 @@ class SubscriptionBuilder
         $isSinglePrice = $stripeSubscription->items->count() === 1;
 
         /** @var \AbdelrahmanMedhat\Cashier\Subscription $subscription */
-        $subscription = $this->owner->subscriptions()->create([
+        $subscription = $this->owner->cashierSubscriptions()->create([
             'name' => $this->name,
-            'cashier_stripe_id' => $stripeSubscription->id,
+            'stripe_id' => $stripeSubscription->id,
             'stripe_status' => $stripeSubscription->status,
             'stripe_price' => $isSinglePrice ? $firstItem->price->id : null,
             'quantity' => $isSinglePrice ? ($firstItem->quantity ?? null) : null,
@@ -316,7 +316,7 @@ class SubscriptionBuilder
         /** @var \Stripe\SubscriptionItem $item */
         foreach ($stripeSubscription->items as $item) {
             $subscription->items()->create([
-                'cashier_stripe_id' => $item->id,
+                'stripe_id' => $item->id,
                 'stripe_product' => $item->price->product,
                 'stripe_price' => $item->price->id,
                 'quantity' => $item->quantity ?? null,

@@ -14,7 +14,7 @@ use AbdelrahmanMedhat\Cashier\Database\Factories\SubscriptionItemFactory;
 /**
  * @property \AbdelrahmanMedhat\Cashier\Subscription|null $subscription
  */
-class SubscriptionItem extends Model
+class CashierSubscriptionItem extends Model
 {
     use HandlesPaymentFailures;
     use HasFactory;
@@ -213,7 +213,7 @@ class SubscriptionItem extends Model
     {
         $timestamp = $timestamp instanceof DateTimeInterface ? $timestamp->getTimestamp() : $timestamp;
 
-        return $this->subscription->owner->stripe()->subscriptionItems->createUsageRecord($this->cashier_stripe_id, [
+        return $this->subscription->owner->stripe()->subscriptionItems->createUsageRecord($this->stripe_id, [
             'quantity' => $quantity,
             'action' => $timestamp ? 'set' : 'increment',
             'timestamp' => $timestamp ?? time(),
@@ -229,7 +229,7 @@ class SubscriptionItem extends Model
     public function usageRecords($options = [])
     {
         return new Collection($this->subscription->owner->stripe()->subscriptionItems->allUsageRecordSummaries(
-            $this->cashier_stripe_id, $options
+            $this->stripe_id, $options
         )->data);
     }
 
@@ -242,7 +242,7 @@ class SubscriptionItem extends Model
     public function updateStripeSubscriptionItem(array $options = [])
     {
         return $this->subscription->owner->stripe()->subscriptionItems->update(
-            $this->cashier_stripe_id, $options
+            $this->stripe_id, $options
         );
     }
 
@@ -255,7 +255,7 @@ class SubscriptionItem extends Model
     public function asStripeSubscriptionItem(array $expand = [])
     {
         return $this->subscription->owner->stripe()->subscriptionItems->retrieve(
-            $this->cashier_stripe_id, ['expand' => $expand]
+            $this->stripe_id, ['expand' => $expand]
         );
     }
 
