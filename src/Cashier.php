@@ -88,14 +88,14 @@ class Cashier
      *
      * @var string
      */
-    public static $subscriptionModel = Subscription::class;
+    public static $subscriptionModel = CashierSubscription::class;
 
     /**
      * The subscription item model class name.
      *
      * @var string
      */
-    public static $subscriptionItemModel = SubscriptionItem::class;
+    public static $subscriptionItemModel = CashierSubscriptionItem::class;
 
     /**
      * Get the customer instance by its Stripe ID.
@@ -107,7 +107,7 @@ class Cashier
     {
         $stripeId = $stripeId instanceof StripeCustomer ? $stripeId->id : $stripeId;
 
-        return $stripeId ? (new static::$customerModel)->where('stripe_id', $stripeId)->first() : null;
+        return $stripeId ? (new static::$customerModel)->where('cashier_stripe_id', $stripeId)->first() : null;
     }
 
     /**

@@ -52,7 +52,7 @@ class Subscription extends Model
     protected $casts = [
         'ends_at' => 'datetime',
         'quantity' => 'integer',
-        'trial_ends_at' => 'datetime',
+        'cashier_trial_ends_at' => 'datetime',
     ];
 
     /**
@@ -343,7 +343,7 @@ class Subscription extends Model
      */
     public function onTrial()
     {
-        return $this->trial_ends_at && $this->trial_ends_at->isFuture();
+        return $this->cashier_trial_ends_at && $this->cashier_trial_ends_at->isFuture();
     }
 
     /**
@@ -354,7 +354,7 @@ class Subscription extends Model
      */
     public function scopeOnTrial($query)
     {
-        $query->whereNotNull('trial_ends_at')->where('trial_ends_at', '>', Carbon::now());
+        $query->whereNotNull('cashier_trial_ends_at')->where('cashier_trial_ends_at', '>', Carbon::now());
     }
 
     /**
@@ -364,7 +364,7 @@ class Subscription extends Model
      */
     public function hasExpiredTrial()
     {
-        return $this->trial_ends_at && $this->trial_ends_at->isPast();
+        return $this->cashier_trial_ends_at && $this->cashier_trial_ends_at->isPast();
     }
 
     /**
@@ -375,7 +375,7 @@ class Subscription extends Model
      */
     public function scopeExpiredTrial($query)
     {
-        $query->whereNotNull('trial_ends_at')->where('trial_ends_at', '<', Carbon::now());
+        $query->whereNotNull('cashier_trial_ends_at')->where('cashier_trial_ends_at', '<', Carbon::now());
     }
 
     /**
@@ -386,7 +386,7 @@ class Subscription extends Model
      */
     public function scopeNotOnTrial($query)
     {
-        $query->whereNull('trial_ends_at')->orWhere('trial_ends_at', '<=', Carbon::now());
+        $query->whereNull('cashier_trial_ends_at')->orWhere('cashier_trial_ends_at', '<=', Carbon::now());
     }
 
     /**
@@ -610,7 +610,7 @@ class Subscription extends Model
      */
     public function skipTrial()
     {
-        $this->trial_ends_at = null;
+        $this->cashier_trial_ends_at = null;
 
         return $this;
     }
@@ -622,7 +622,7 @@ class Subscription extends Model
      */
     public function endTrial()
     {
-        if (is_null($this->trial_ends_at)) {
+        if (is_null($this->cashier_trial_ends_at)) {
             return $this;
         }
 
@@ -631,7 +631,7 @@ class Subscription extends Model
             'proration_behavior' => $this->prorateBehavior(),
         ]);
 
-        $this->trial_ends_at = null;
+        $this->cashier_trial_ends_at = null;
 
         $this->save();
 
@@ -655,7 +655,7 @@ class Subscription extends Model
             'proration_behavior' => $this->prorateBehavior(),
         ]);
 
-        $this->trial_ends_at = $date;
+        $this->cashier_trial_ends_at = $date;
 
         $this->save();
 
@@ -685,7 +685,7 @@ class Subscription extends Model
         );
 
         $stripeSubscription = $this->owner->stripe()->subscriptions->update(
-            $this->stripe_id, $this->getSwapOptions($items, $options)
+            $this->cashier_stripe_id, $this->getSwapOptions($items, $options)
         );
 
         /** @var \Stripe\SubscriptionItem $firstItem */
@@ -705,7 +705,7 @@ class Subscription extends Model
             $subscriptionItemIds[] = $item->id;
 
             $this->items()->updateOrCreate([
-                'stripe_id' => $item->id,
+                'cashier_stripe_id' => $item->id,
             ], [
                 'stripe_product' => $item->price->product,
                 'stripe_price' => $item->price->id,
@@ -714,7 +714,7 @@ class Subscription extends Model
         }
 
         // Delete items that aren't attached to the subscription anymore...
-        $this->items()->whereNotIn('stripe_id', $subscriptionItemIds)->delete();
+        $this->items()->whereNotIn('cashier_stripe_id', $subscriptionItemIds)->delete();
 
         $this->unsetRelation('items');
 
@@ -825,7 +825,7 @@ class Subscription extends Model
         }
 
         $payload['trial_end'] = $this->onTrial()
-                        ? $this->trial_ends_at->getTimestamp()
+                        ? $this->cashier_trial_ends_at->getTimestamp()
                         : 'now';
 
         return $payload;
@@ -851,7 +851,7 @@ class Subscription extends Model
 
         $stripeSubscriptionItem = $this->owner->stripe()->subscriptionItems
             ->create(array_filter(array_merge([
-                'subscription' => $this->stripe_id,
+                'subscription' => $this->cashier_stripe_id,
                 'price' => $price,
                 'quantity' => $quantity,
                 'tax_rates' => $this->getPriceTaxRatesForPayload($price),
@@ -860,7 +860,7 @@ class Subscription extends Model
             ], $options)));
 
         $this->items()->create([
-            'stripe_id' => $stripeSubscriptionItem->id,
+            'cashier_stripe_id' => $stripeSubscriptionItem->id,
             'stripe_product' => $stripeSubscriptionItem->price->product,
             'stripe_price' => $stripeSubscriptionItem->price->id,
             'quantity' => $stripeSubscriptionItem->quantity ?? null,
@@ -987,7 +987,7 @@ class Subscription extends Model
         // would have ended. Otherwise, we'll retrieve the end of the billing period
         // period and make that the end of the grace period for this current user.
         if ($this->onTrial()) {
-            $this->ends_at = $this->trial_ends_at;
+            $this->ends_at = $this->cashier_trial_ends_at;
         } else {
             $this->ends_at = Carbon::createFromTimestamp(
                 $stripeSubscription->current_period_end
@@ -1032,7 +1032,7 @@ class Subscription extends Model
      */
     public function cancelNow()
     {
-        $this->owner->stripe()->subscriptions->cancel($this->stripe_id, [
+        $this->owner->stripe()->subscriptions->cancel($this->cashier_stripe_id, [
             'prorate' => $this->prorateBehavior() === 'create_prorations',
         ]);
 
@@ -1048,7 +1048,7 @@ class Subscription extends Model
      */
     public function cancelNowAndInvoice()
     {
-        $this->owner->stripe()->subscriptions->cancel($this->stripe_id, [
+        $this->owner->stripe()->subscriptions->cancel($this->cashier_stripe_id, [
             'invoice_now' => true,
             'prorate' => $this->prorateBehavior() === 'create_prorations',
         ]);
@@ -1088,7 +1088,7 @@ class Subscription extends Model
 
         $stripeSubscription = $this->updateStripeSubscription([
             'cancel_at_period_end' => false,
-            'trial_end' => $this->onTrial() ? $this->trial_ends_at->getTimestamp() : 'now',
+            'trial_end' => $this->onTrial() ? $this->cashier_trial_ends_at->getTimestamp() : 'now',
         ]);
 
         // Finally, we will remove the ending timestamp from the user's record in the
@@ -1123,7 +1123,7 @@ class Subscription extends Model
     public function invoice(array $options = [])
     {
         try {
-            return $this->user->invoice(array_merge($options, ['subscription' => $this->stripe_id]));
+            return $this->user->invoice(array_merge($options, ['subscription' => $this->cashier_stripe_id]));
         } catch (IncompletePayment $exception) {
             // Set the new Stripe subscription status immediately when payment fails...
             $this->fill([
@@ -1157,7 +1157,7 @@ class Subscription extends Model
     public function upcomingInvoice(array $options = [])
     {
         return $this->owner->upcomingInvoice(array_merge([
-            'subscription' => $this->stripe_id,
+            'subscription' => $this->cashier_stripe_id,
         ], $options));
     }
 
@@ -1207,7 +1207,7 @@ class Subscription extends Model
     public function invoices($includePending = false, $parameters = [])
     {
         return $this->owner->invoices(
-            $includePending, array_merge($parameters, ['subscription' => $this->stripe_id])
+            $includePending, array_merge($parameters, ['subscription' => $this->cashier_stripe_id])
         );
     }
 
@@ -1360,7 +1360,7 @@ class Subscription extends Model
     public function updateStripeSubscription(array $options = [])
     {
         return $this->owner->stripe()->subscriptions->update(
-            $this->stripe_id, $options
+            $this->cashier_stripe_id, $options
         );
     }
 
@@ -1373,7 +1373,7 @@ class Subscription extends Model
     public function asStripeSubscription(array $expand = [])
     {
         return $this->owner->stripe()->subscriptions->retrieve(
-            $this->stripe_id, ['expand' => $expand]
+            $this->cashier_stripe_id, ['expand' => $expand]
         );
     }
 

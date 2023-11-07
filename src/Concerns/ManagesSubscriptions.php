@@ -72,7 +72,7 @@ trait ManagesSubscriptions
      */
     public function onGenericTrial()
     {
-        return $this->trial_ends_at && $this->trial_ends_at->isFuture();
+        return $this->cashier_trial_ends_at && $this->cashier_trial_ends_at->isFuture();
     }
 
     /**
@@ -83,7 +83,7 @@ trait ManagesSubscriptions
      */
     public function scopeOnGenericTrial($query)
     {
-        $query->whereNotNull('trial_ends_at')->where('trial_ends_at', '>', Carbon::now());
+        $query->whereNotNull('cashier_trial_ends_at')->where('cashier_trial_ends_at', '>', Carbon::now());
     }
 
     /**
@@ -93,7 +93,7 @@ trait ManagesSubscriptions
      */
     public function hasExpiredGenericTrial()
     {
-        return $this->trial_ends_at && $this->trial_ends_at->isPast();
+        return $this->cashier_trial_ends_at && $this->cashier_trial_ends_at->isPast();
     }
 
     /**
@@ -104,7 +104,7 @@ trait ManagesSubscriptions
      */
     public function scopeHasExpiredGenericTrial($query)
     {
-        $query->whereNotNull('trial_ends_at')->where('trial_ends_at', '<', Carbon::now());
+        $query->whereNotNull('cashier_trial_ends_at')->where('cashier_trial_ends_at', '<', Carbon::now());
     }
 
     /**
@@ -116,14 +116,14 @@ trait ManagesSubscriptions
     public function trialEndsAt($name = 'default')
     {
         if (func_num_args() === 0 && $this->onGenericTrial()) {
-            return $this->trial_ends_at;
+            return $this->cashier_trial_ends_at;
         }
 
         if ($subscription = $this->subscription($name)) {
-            return $subscription->trial_ends_at;
+            return $subscription->cashier_trial_ends_at;
         }
 
-        return $this->trial_ends_at;
+        return $this->cashier_trial_ends_at;
     }
 
     /**

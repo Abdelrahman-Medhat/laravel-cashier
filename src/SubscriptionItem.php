@@ -42,7 +42,7 @@ class SubscriptionItem extends Model
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function subscription()
+    public function cashierSubscription()
     {
         $model = Cashier::$subscriptionModel;
 
@@ -213,7 +213,7 @@ class SubscriptionItem extends Model
     {
         $timestamp = $timestamp instanceof DateTimeInterface ? $timestamp->getTimestamp() : $timestamp;
 
-        return $this->subscription->owner->stripe()->subscriptionItems->createUsageRecord($this->stripe_id, [
+        return $this->subscription->owner->stripe()->subscriptionItems->createUsageRecord($this->cashier_stripe_id, [
             'quantity' => $quantity,
             'action' => $timestamp ? 'set' : 'increment',
             'timestamp' => $timestamp ?? time(),
@@ -229,7 +229,7 @@ class SubscriptionItem extends Model
     public function usageRecords($options = [])
     {
         return new Collection($this->subscription->owner->stripe()->subscriptionItems->allUsageRecordSummaries(
-            $this->stripe_id, $options
+            $this->cashier_stripe_id, $options
         )->data);
     }
 
@@ -242,7 +242,7 @@ class SubscriptionItem extends Model
     public function updateStripeSubscriptionItem(array $options = [])
     {
         return $this->subscription->owner->stripe()->subscriptionItems->update(
-            $this->stripe_id, $options
+            $this->cashier_stripe_id, $options
         );
     }
 
@@ -255,7 +255,7 @@ class SubscriptionItem extends Model
     public function asStripeSubscriptionItem(array $expand = [])
     {
         return $this->subscription->owner->stripe()->subscriptionItems->retrieve(
-            $this->stripe_id, ['expand' => $expand]
+            $this->cashier_stripe_id, ['expand' => $expand]
         );
     }
 

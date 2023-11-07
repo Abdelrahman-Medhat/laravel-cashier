@@ -78,7 +78,7 @@ class Invoice implements Arrayable, Jsonable, JsonSerializable
      */
     public function __construct($owner, StripeInvoice $invoice, array $refreshData = [])
     {
-        if ($owner->stripe_id !== $invoice->customer) {
+        if ($owner->cashier_stripe_id !== $invoice->customer) {
             throw InvalidInvoice::invalidOwner($invoice, $owner);
         }
 
@@ -382,7 +382,7 @@ class Invoice implements Arrayable, Jsonable, JsonSerializable
      */
     public function hasTax()
     {
-        $lineItems = $this->invoiceItems() + $this->subscriptions();
+        $lineItems = $this->invoiceItems() + $this->cashierSubscriptions();
 
         return Collection::make($lineItems)->contains(function (InvoiceLineItem $item) {
             return $item->hasTaxRates();
@@ -590,7 +590,7 @@ class Invoice implements Arrayable, Jsonable, JsonSerializable
         } else {
             // If no invoice ID is present then assume this is the customer's upcoming invoice...
             $this->invoice = $this->owner->stripe()->invoices->upcoming(array_merge($this->refreshData, [
-                'customer' => $this->owner->stripe_id,
+                'customer' => $this->owner->cashier_stripe_id,
                 'expand' => $expand,
             ]));
         }

@@ -35,7 +35,7 @@ trait ManagesInvoices
         $this->assertCustomerExists();
 
         $options = array_merge([
-            'customer' => $this->stripe_id,
+            'customer' => $this->cashier_stripe_id,
             'currency' => $this->preferredCurrency(),
             'description' => $description,
         ], $options);
@@ -85,7 +85,7 @@ trait ManagesInvoices
         $this->assertCustomerExists();
 
         $options = array_merge([
-            'customer' => $this->stripe_id,
+            'customer' => $this->cashier_stripe_id,
             'price' => $price,
             'quantity' => $quantity,
         ], $options);
@@ -162,7 +162,7 @@ trait ManagesInvoices
 
         $parameters = array_merge([
             'automatic_tax' => $this->automaticTaxPayload(),
-            'customer' => $this->stripe_id,
+            'customer' => $this->cashier_stripe_id,
         ], $options);
 
         if (array_key_exists('subscription', $parameters)) {
@@ -188,7 +188,7 @@ trait ManagesInvoices
 
         $parameters = array_merge([
             'automatic_tax' => $this->automaticTaxPayload(),
-            'customer' => $this->stripe_id,
+            'customer' => $this->cashier_stripe_id,
         ], $options);
 
         try {
@@ -276,7 +276,7 @@ trait ManagesInvoices
         $parameters = array_merge(['limit' => 24], $parameters);
 
         $stripeInvoices = static::stripe()->invoices->all(
-            ['customer' => $this->stripe_id] + $parameters
+            ['customer' => $this->cashier_stripe_id] + $parameters
         );
 
         // Here we will loop through the Stripe invoices and create our own custom Invoice
