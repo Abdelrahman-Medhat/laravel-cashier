@@ -34,7 +34,7 @@ trait ManagesSubscriptions
             return true;
         }
 
-        $subscription = $this->subscription($name);
+        $subscription = $this->cashierSubscription($name);
 
         if (! $subscription || ! $subscription->onTrial()) {
             return false;
@@ -56,7 +56,7 @@ trait ManagesSubscriptions
             return true;
         }
 
-        $subscription = $this->subscription($name);
+        $subscription = $this->cashierSubscription($name);
 
         if (! $subscription || ! $subscription->hasExpiredTrial()) {
             return false;
@@ -119,7 +119,7 @@ trait ManagesSubscriptions
             return $this->cashier_trial_ends_at;
         }
 
-        if ($subscription = $this->subscription($name)) {
+        if ($subscription = $this->cashierSubscription($name)) {
             return $subscription->cashier_trial_ends_at;
         }
 
@@ -135,7 +135,7 @@ trait ManagesSubscriptions
      */
     public function subscribed($name = 'default', $price = null)
     {
-        $subscription = $this->subscription($name);
+        $subscription = $this->cashierSubscription($name);
 
         if (! $subscription || ! $subscription->valid()) {
             return false;
@@ -150,7 +150,7 @@ trait ManagesSubscriptions
      * @param  string  $name
      * @return \AbdelrahmanMedhat\Cashier\Subscription|null
      */
-    public function billableSubscription($name = 'default')
+    public function cashierSubscription($name = 'default')
     {
         return $this->cashierSubscriptions->where('name', $name)->first();
     }
@@ -173,7 +173,7 @@ trait ManagesSubscriptions
      */
     public function hasIncompletePayment($name = 'default')
     {
-        if ($subscription = $this->subscription($name)) {
+        if ($subscription = $this->cashierSubscription($name)) {
             return $subscription->hasIncompletePayment();
         }
 
@@ -189,7 +189,7 @@ trait ManagesSubscriptions
      */
     public function subscribedToProduct($products, $name = 'default')
     {
-        $subscription = $this->subscription($name);
+        $subscription = $this->cashierSubscription($name);
 
         if (! $subscription || ! $subscription->valid()) {
             return false;
@@ -213,7 +213,7 @@ trait ManagesSubscriptions
      */
     public function subscribedToPrice($prices, $name = 'default')
     {
-        $subscription = $this->subscription($name);
+        $subscription = $this->cashierSubscription($name);
 
         if (! $subscription || ! $subscription->valid()) {
             return false;

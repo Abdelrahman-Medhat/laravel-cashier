@@ -232,8 +232,8 @@ class WebhookController extends Controller
             $subscription->quantity = $isSinglePrice && isset($firstItem['quantity']) ? $firstItem['quantity'] : null;
 
             // Trial ending date...
-            if (isset($data['cashier_trial_end'])) {
-                $trialEnd = Carbon::createFromTimestamp($data['cashier_trial_end']);
+            if (isset($data['trial_end'])) {
+                $trialEnd = Carbon::createFromTimestamp($data['trial_end']);
 
                 if (! $subscription->cashier_trial_ends_at || $subscription->cashier_trial_ends_at->ne($trialEnd)) {
                     $subscription->cashier_trial_ends_at = $trialEnd;
